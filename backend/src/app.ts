@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import { registerCors } from './plugins/cors';
 import { generationController } from './modules/generation/generation.controller';
+import { config } from './config/env';
 
 /**
  * Creates and configures the Fastify application.
@@ -25,6 +26,11 @@ export async function buildApp() {
 
   // Health check
   fastify.get('/health', async () => ({ status: 'ok' }));
+
+  // Provider status — lets the frontend know if mock mode is active
+  fastify.get('/api/status', async () => ({
+    provider: config.aiProvider,
+  }));
 
   return fastify;
 }

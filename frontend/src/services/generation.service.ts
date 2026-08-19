@@ -1,6 +1,23 @@
-import type { GenerationRequest, GenerationResponse, GenerationErrorResponse } from '../types';
+import type { GenerationRequest, GenerationResponse, GenerationErrorResponse, StatusResponse } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+
+/**
+ * Fetches the current AI provider status from the backend.
+ * Used to show a "Demo AI mode" indicator when the mock provider is active.
+ */
+export async function getProviderStatus(): Promise<StatusResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/status`, {
+      signal: AbortSignal.timeout(5_000),
+    });
+    const data: StatusResponse = await response.json();
+    return data;
+  } catch {
+    // If the status endpoint is unreachable, assume real provider
+    return { provider: 'openrouter' };
+  }
+}
 
 /**
  * Calls the backend generation API.
@@ -20,7 +37,7 @@ export async function generateResponse(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(request),
-      signal: AbortSignal.timeout(35_000), // Slightly longer than backend timeout
+      signal: AbortSignal.timeout(65_000), // Slightly longer than backend timeout
     });
   } catch (err) {
     if (err instanceof Error && err.name === 'TimeoutError') {

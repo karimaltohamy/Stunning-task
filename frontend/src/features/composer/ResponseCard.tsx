@@ -1,66 +1,43 @@
 import { useState } from 'react';
 import { getIntegrationName } from '../../lib/integrations';
-import type { IntegrationId } from '../../types';
+import type { IntegrationId, GenerationData } from '../../types';
 
 interface ResponseCardProps {
   prompt: string;
   integrations: IntegrationId[];
-  response: string;
+  data: GenerationData;
+  isMockMode: boolean;
   onEditPrompt: () => void;
-}
-
-/**
- * Renders the AI response.
- *
- * Converts the markdown-like response text to formatted HTML for display.
- * Uses a simple but effective approach to parse the most common markdown patterns.
- */
-function formatResponse(text: string): string {
-  return text
-    // Headers
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    // Bold
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    // Inline code
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    // Bullet lists - convert consecutive list items
-    .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
-    // Numbered lists
-    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-    // Wrap consecutive <li> items in <ul>
-    .replace(/(<li>.*<\/li>\n?)+/g, (match) => `<ul>${match}</ul>`)
-    // Paragraph breaks (double newline)
-    .replace(/\n\n/g, '</p><p>')
-    // Single newlines within paragraphs
-    .replace(/\n/g, '<br/>')
-    // Wrap in paragraph
-    .replace(/^(?!<[hup])/m, '<p>')
-    + '</p>';
 }
 
 /**
  * ResponseCard — the AI-generated response display.
  *
- * Shows:
+ * Renders structured GenerationData:
  * - Original input recap (muted, collapsible)
- * - Generation response with formatted content
+ * - Project title + summary
+ * - Features list
+ * - Integration plans
+ * - Suggested tech stack
+ * - Architecture description
  * - Copy and Edit Prompt actions
+ * - Demo mode indicator (when mock provider is active)
  *
- * Design preserved exactly from source HTML (generated plan page).
+ * Design preserved from source HTML (generated plan page).
  */
 export function ResponseCard({
   prompt,
   integrations,
-  response,
+  data,
+  isMockMode,
   onEditPrompt,
 }: ResponseCardProps) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
+    const text = JSON.stringify(data, null, 2);
     try {
-      await navigator.clipboard.writeText(response);
+      await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -103,13 +80,21 @@ export function ResponseCard({
         <div className="p-xl flex flex-col gap-lg">
           {/* Header */}
           <div className="flex items-start justify-between border-b border-border-subtle pb-md">
-            <div>
+            <div className="flex-1">
               <h1 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-text-primary mb-sm">
-                Architecture Generated
+                {data.title}
               </h1>
               <p className="font-body-md text-body-md text-text-muted">
-                Your project structure and components are ready to be built.
+                {data.summary}
               </p>
+              {isMockMode && (
+                <div className="inline-flex items-center gap-xs mt-sm px-sm py-xs rounded-full bg-glow-orange border border-primary/20 text-primary-container font-label-mono text-[11px] uppercase tracking-wider">
+                  <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>
+                    science
+                  </span>
+                  Demo AI Mode
+                </div>
+              )}
             </div>
             <div className="h-12 w-12 rounded-full bg-glow-orange flex items-center justify-center border border-primary/30 shrink-0 ml-4">
               <span
@@ -121,11 +106,96 @@ export function ResponseCard({
             </div>
           </div>
 
-          {/* AI Response Content */}
-          <div
-            className="ai-response-content"
-            dangerouslySetInnerHTML={{ __html: formatResponse(response) }}
-          />
+          {/* Features */}
+          {data.features.length > 0 && (
+            <div className="flex flex-col gap-sm">
+              <h2 className="font-label-mono text-label-mono text-text-muted uppercase tracking-widest">
+                Key Features
+              </h2>
+              <ul className="ai-response-content">
+                {data.features.map((feature, i) => (
+                  <li key={i}>{feature}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Integrations */}
+          {data.integrations.length > 0 && (
+            <div className="flex flex-col gap-sm">
+              <h2 className="font-label-mono text-label-mono text-text-muted uppercase tracking-widest">
+                Integrations
+              </h2>
+              <div className="flex flex-col gap-sm">
+                {data.integrations.map((integration, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-sm bg-surface border border-border-subtle rounded-lg p-md"
+                  >
+                    <span
+                      className="material-symbols-outlined text-primary-container shrink-0"
+                      style={{ fontSize: '18px' }}
+                    >
+                      extension
+                    </span>
+                    <div>
+                      <p className="font-label-mono text-label-mono text-text-primary uppercase tracking-wider mb-xs">
+                        {integration.name}
+                      </p>
+                      <p className="font-body-md text-body-md text-text-muted">
+                        {integration.purpose}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {data.integrations.length === 0 && (
+            <div className="flex items-center gap-sm text-text-muted font-body-md text-body-md">
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                info
+              </span>
+              No external integrations were selected for this project.
+            </div>
+          )}
+
+          {/* Suggested Stack */}
+          {data.suggestedStack.length > 0 && (
+            <div className="flex flex-col gap-sm">
+              <h2 className="font-label-mono text-label-mono text-text-muted uppercase tracking-widest">
+                Suggested Stack
+              </h2>
+              <div className="flex flex-wrap gap-sm">
+                {data.suggestedStack.map((tech, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-xs px-sm py-xs rounded bg-surface-container-high border border-border-subtle text-text-primary font-label-mono text-[11px]"
+                  >
+                    <span className="material-symbols-outlined text-primary-container" style={{ fontSize: '12px' }}>
+                      memory
+                    </span>
+                    {tech}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Architecture */}
+          {data.architecture && (
+            <div className="flex flex-col gap-sm">
+              <h2 className="font-label-mono text-label-mono text-text-muted uppercase tracking-widest">
+                Architecture
+              </h2>
+              <div className="ai-response-content">
+                {data.architecture.split('\n').map((line, i) => (
+                  <p key={i}>{line}</p>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row items-center justify-end gap-md pt-md border-t border-border-subtle mt-sm">

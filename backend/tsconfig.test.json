@@ -4,7 +4,7 @@
     "module": "CommonJS",
     "moduleResolution": "node",
     "lib": ["ES2022"],
-    "outDir": "./dist",
+    "outDir": "./dist-test",
     "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
@@ -13,5 +13,5 @@
     "resolveJsonModule": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "src/**/*.spec.ts"]
+  "exclude": ["node_modules", "dist"]
 }

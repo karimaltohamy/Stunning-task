@@ -1,10 +1,10 @@
 import { useState, useCallback } from 'react';
 import { generateResponse } from '../services/generation.service';
-import type { IntegrationId } from '../types';
+import type { IntegrationId, GenerationData } from '../types';
 
 interface UseGenerationReturn {
   isLoading: boolean;
-  response: string | null;
+  data: GenerationData | null;
   error: string | null;
   generate: (prompt: string, integrations: IntegrationId[]) => Promise<void>;
   reset: () => void;
@@ -16,7 +16,7 @@ interface UseGenerationReturn {
  */
 export function useGeneration(): UseGenerationReturn {
   const [isLoading, setIsLoading] = useState(false);
-  const [response, setResponse] = useState<string | null>(null);
+  const [data, setData] = useState<GenerationData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const generate = useCallback(async (prompt: string, integrations: IntegrationId[]) => {
@@ -25,11 +25,11 @@ export function useGeneration(): UseGenerationReturn {
 
     setIsLoading(true);
     setError(null);
-    setResponse(null);
+    setData(null);
 
     try {
       const result = await generateResponse({ prompt, integrations });
-      setResponse(result.response);
+      setData(result.data);
     } catch (err) {
       const message =
         err instanceof Error
@@ -42,10 +42,10 @@ export function useGeneration(): UseGenerationReturn {
   }, [isLoading]);
 
   const reset = useCallback(() => {
-    setResponse(null);
+    setData(null);
     setError(null);
     setIsLoading(false);
   }, []);
 
-  return { isLoading, response, error, generate, reset };
+  return { isLoading, data, error, generate, reset };
 }

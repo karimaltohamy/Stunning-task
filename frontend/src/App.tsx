@@ -1,9 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { ComposerCard } from './features/composer/ComposerCard';
 import { ResponseCard } from './features/composer/ResponseCard';
 import { useGeneration } from './hooks/useGeneration';
+import { getProviderStatus } from './services/generation.service';
 import type { IntegrationId } from './types';
 import './index.css';
 
@@ -15,11 +16,19 @@ import './index.css';
  * - selectedIntegrations
  * - generation state (via useGeneration hook)
  * - view switching (composer ↔ response)
+ * - demo mode indicator (when mock provider is active)
  */
 function App() {
   const [prompt, setPrompt] = useState('');
   const [selectedIntegrations, setSelectedIntegrations] = useState<IntegrationId[]>([]);
-  const { isLoading, response, error, generate, reset } = useGeneration();
+  const { isLoading, data, error, generate, reset } = useGeneration();
+  const [isMockMode, setIsMockMode] = useState(false);
+
+  useEffect(() => {
+    getProviderStatus().then((status) => {
+      setIsMockMode(status.provider === 'mock');
+    });
+  }, []);
 
   const handleToggleIntegration = useCallback((id: IntegrationId) => {
     setSelectedIntegrations((prev) =>
@@ -39,7 +48,7 @@ function App() {
     reset();
   }, [reset]);
 
-  const showResponse = response !== null || error !== null;
+  const showResponse = data !== null || error !== null;
 
   return (
     <div className="min-h-screen flex flex-col font-body-md text-body-md antialiased overflow-x-hidden">
@@ -138,11 +147,12 @@ function App() {
         )}
 
         {/* Response state */}
-        {response && !error && (
+        {data && !error && (
           <ResponseCard
             prompt={prompt}
             integrations={selectedIntegrations}
-            response={response}
+            data={data}
+            isMockMode={isMockMode}
             onEditPrompt={handleEditPrompt}
           />
         )}

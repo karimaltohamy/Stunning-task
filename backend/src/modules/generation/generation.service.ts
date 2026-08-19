@@ -1,5 +1,6 @@
-import { generateFromAI } from '../../lib/ai-provider';
+import { getAIProvider } from '../../lib/provider-factory';
 import { buildSystemPrompt } from '../../utils/system-prompt';
+import { config } from '../../config/env';
 import type { GenerationRequest, GenerationResponse } from './generation.types';
 
 /**
@@ -8,10 +9,12 @@ import type { GenerationRequest, GenerationResponse } from './generation.types';
  * Responsible for:
  * 1. Receiving validated input
  * 2. Building the system prompt (incorporating selected integrations)
- * 3. Calling the AI provider
- * 4. Returning the generated response
+ * 3. Calling the AI provider via the AIProvider abstraction
+ * 4. Returning the generated response with provider metadata
  *
  * Does NOT handle HTTP concerns — that belongs to the controller.
+ * Does NOT know which concrete provider is active — that is decided
+ * by the provider factory.
  */
 export async function generateResponse(
   request: GenerationRequest
@@ -20,10 +23,16 @@ export async function generateResponse(
 
   const systemPrompt = buildSystemPrompt(integrations);
 
-  const responseText = await generateFromAI({
+  const provider = getAIProvider();
+
+  const data = await provider.generate({
+    prompt,
+    integrations,
     systemPrompt,
-    userMessage: prompt,
   });
 
-  return { response: responseText };
+  return {
+    data,
+    provider: config.aiProvider,
+  };
 }

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "test": "tsc -p tsconfig.test.json && node --test dist-test/lib/mock-provider.spec.js dist-test/lib/provider-factory.spec.js"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",

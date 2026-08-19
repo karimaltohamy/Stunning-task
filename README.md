@@ -4,7 +4,37 @@ An AI-powered app builder where users describe what they want to build, select i
 
 ## Overview
 
-Users enter a natural-language prompt describing their application, select relevant integrations (Stripe, Shopify, Gmail, Slack, Google Sheets), and click **Initialize Build**. The backend builds a tailored system prompt incorporating the selected integrations, sends it to the OpenRouter API (using a free model), and returns a structured architecture plan.
+Users enter a natural-language prompt describing their application, select relevant integrations (Stripe, Shopify, Gmail, Slack, Google Sheets), and click **Initialize Build**. The backend builds a tailored system prompt incorporating the selected integrations, calls the configured AI provider, and returns a structured architecture plan.
+
+## AI Provider
+
+The application supports two providers:
+
+- **OpenRouter** — real AI generation via the OpenRouter API (OpenAI-compatible). Requires an API key.
+- **Mock** — generates a realistic structured response locally without any external API call. Used for local development and demos.
+
+By default, `AI_PROVIDER` is set to `mock`, so the project runs out of the box without an API key.
+
+### Mock mode
+
+```env
+AI_PROVIDER=mock
+```
+
+No `AI_API_KEY` is required. The mock provider dynamically builds a response based on the user's prompt and selected integrations.
+
+### OpenRouter mode
+
+```env
+AI_PROVIDER=openrouter
+AI_API_KEY=sk-or-v1-your-key-here
+AI_BASE_URL=https://openrouter.ai/api/v1
+AI_MODEL=openai/gpt-oss-20b:free
+```
+
+When `AI_PROVIDER` is `openrouter`, the backend validates that `AI_API_KEY` is set at startup and fails fast with a clear error message if it's missing.
+
+The frontend automatically shows a "Demo AI Mode" indicator when the mock provider is active. No UI changes are needed when switching providers.
 
 ## Tech Stack
 
@@ -12,7 +42,7 @@ Users enter a natural-language prompt describing their application, select relev
 |-------|-----------|
 | Frontend | React 19, Vite, TypeScript, Tailwind CSS v3 |
 | Backend | Fastify 4, TypeScript, Zod |
-| AI Provider | OpenRouter (Llama 3.3 70B free) via `openai` SDK |
+| AI Provider | OpenRouter (via `openai` SDK) or Mock provider |
 | Validation | Zod (backend), client-side guards (frontend) |
 
 ## Architecture
@@ -23,9 +53,11 @@ User Browser (React + Vite, :5173)
 Fastify Backend (:3000)
         ↓  generation.controller → Zod validation
         ↓  generation.service → buildSystemPrompt()
-        ↓  ai-provider.ts → OpenRouter API
+        ↓  provider-factory.ts → selects AIProvider
+        ↓    ├── OpenRouterAIProvider → OpenRouter API
+        ↓    └── MockAIProvider → local generation
         ↓
-Response returned → ResponseCard renders output
+Response returned → ResponseCard renders structured output
 ```
 
 ## Project Structure
@@ -46,7 +78,7 @@ project/
 │       ├── modules/generation/ # controller, service, schema, types
 │       ├── config/             # environment config
 │       ├── plugins/            # CORS
-│       ├── lib/                # ai-provider abstraction
+│       ├── lib/                # ai-provider, mock-provider, provider-factory
 │       └── utils/              # buildSystemPrompt
 │
 ├── README.md
@@ -60,7 +92,7 @@ project/
 ### Prerequisites
 
 - Node.js 18+
-- An OpenRouter API key — get one free at [openrouter.ai/keys](https://openrouter.ai/keys)
+- (Optional) An OpenRouter API key — get one free at [openrouter.ai/keys](https://openrouter.ai/keys)
 
 ### Backend
 
@@ -72,7 +104,8 @@ npm install
 
 # Set up environment
 cp .env.example .env
-# Edit .env and set AI_API_KEY=your_openrouter_key_here
+# For mock mode: no changes needed — works out of the box
+# For real AI: set AI_PROVIDER=openrouter and AI_API_KEY=your_key
 
 # Start development server
 npm run dev
@@ -103,9 +136,10 @@ The frontend will start at `http://localhost:5173`.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `AI_API_KEY` | **Yes** | OpenRouter API key (starts with `sk-or-`) |
+| `AI_PROVIDER` | No | `"mock"` or `"openrouter"` (default: `mock`) |
+| `AI_API_KEY` | Only if `AI_PROVIDER=openrouter` | OpenRouter API key (starts with `sk-or-`) |
 | `AI_BASE_URL` | No | API base URL (default: `https://openrouter.ai/api/v1`) |
-| `AI_MODEL` | No | Model identifier (default: `meta-llama/llama-3.3-70b-instruct:free`) |
+| `AI_MODEL` | No | Model identifier (default: `openai/gpt-oss-20b:free`) |
 | `PORT` | No | Server port (default: `3000`) |
 | `FRONTEND_URL` | No | Allowed CORS origin in production (default: `http://localhost:5173`) |
 | `NODE_ENV` | No | `development` or `production` (default: `development`) |
@@ -135,7 +169,35 @@ Generates an AI architecture plan based on the user's prompt and selected integr
 
 ```json
 {
-  "response": "## Architecture Overview\n\n..."
+  "data": {
+    "title": "Restaurant Ordering Dashboard",
+    "summary": "A restaurant ordering dashboard with 2 integrations...",
+    "features": [
+      "Real-time analytics dashboard with key metrics",
+      "Admin panel for managing records and users",
+      "Product catalog with search and filtering",
+      "Shopping cart and checkout flow"
+    ],
+    "integrations": [
+      {
+        "name": "Stripe",
+        "purpose": "Handle online payments, subscriptions, and checkout flows..."
+      },
+      {
+        "name": "Slack",
+        "purpose": "Post real-time alerts (new orders, errors, deployment status)..."
+      }
+    ],
+    "suggestedStack": [
+      "React + TypeScript (frontend)",
+      "Node.js + Express (API server)",
+      "PostgreSQL (primary database)",
+      "Stripe SDK + webhook signature verification",
+      "Slack Web API + bot token"
+    ],
+    "architecture": "The Restaurant Ordering Dashboard follows a standard three-tier architecture..."
+  },
+  "provider": "mock"
 }
 ```
 
@@ -144,6 +206,14 @@ Generates an AI architecture plan based on the user's prompt and selected integr
 ```json
 {
   "error": "Prompt cannot be empty."
+}
+```
+
+**Error (429):**
+
+```json
+{
+  "error": "The AI service is busy. Please wait a moment and try again."
 }
 ```
 
@@ -161,6 +231,30 @@ Generates an AI architecture plan based on the user's prompt and selected integr
 - Prompt: 1–2000 characters
 - Integrations: subset of valid IDs above (empty array is allowed)
 
+### `GET /api/status`
+
+Returns the current AI provider mode.
+
+```json
+{
+  "provider": "mock"
+}
+```
+
 ### `GET /health`
 
 Returns `{ "status": "ok" }`. Useful for uptime checks.
+
+## Tests
+
+```bash
+cd backend
+npm test
+```
+
+Tests cover:
+- Mock provider response structure and integration-awareness
+- Provider factory selection
+- Empty integrations handling
+- Missing API key validation when `AI_PROVIDER=openrouter`
+- Mock mode working without API key

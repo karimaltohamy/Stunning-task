@@ -20,12 +20,31 @@ export interface GenerationRequest {
   integrations: IntegrationId[];
 }
 
+export interface IntegrationPlan {
+  name: string;
+  purpose: string;
+}
+
+export interface GenerationData {
+  title: string;
+  summary: string;
+  features: string[];
+  integrations: IntegrationPlan[];
+  suggestedStack: string[];
+  architecture: string;
+}
+
 export interface GenerationResponse {
-  response: string;
+  data: GenerationData;
+  provider: 'openrouter' | 'mock';
 }
 
 export interface GenerationErrorResponse {
   error: string;
+}
+
+export interface StatusResponse {
+  provider: 'openrouter' | 'mock';
 }
 
 export type AppState = 'idle' | 'loading' | 'success' | 'error';

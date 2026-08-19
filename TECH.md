@@ -11,7 +11,7 @@ Released in late 2024, version 4 introduced a major architecture overhaul: the p
 Stunning would benefit from the AI SDK in three concrete ways:
 
 **1. Provider-agnostic backend**
-Right now, `ai-provider.ts` uses the `openai` SDK pointed at OpenRouter with a hardcoded model. Replacing it with the Vercel AI SDK means switching to a different model (or a different provider entirely) is a one-line change. You can also implement model fallback — if Llama 3.3 70B fails, automatically retry with a different free model — without writing custom retry logic.
+Right now, `ai-provider.ts` uses the `openai` SDK pointed at OpenRouter with a hardcoded model. Replacing it with the Vercel AI SDK means switching to a different model (or a different provider entirely) is a one-line change. You can also implement model fallback — if gpt-oss-20b fails, automatically retry with another free model — without writing custom retry logic.
 
 **2. Streaming responses**
 The most user-visible improvement. Instead of waiting 10–20 seconds for the full response and then rendering it all at once, the AI SDK makes it straightforward to stream the response token-by-token. The backend uses `streamText()` and returns a streaming response. The frontend uses the `useCompletion` hook, which updates a `completion` string in real time. The user sees the architecture plan being written out live, which dramatically improves perceived performance.

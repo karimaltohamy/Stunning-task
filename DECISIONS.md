@@ -6,7 +6,7 @@
 The source HTML was a single static file. I introduced a proper layered architecture:
 - **Controller** handles HTTP routing, request parsing, and maps errors to status codes
 - **Service** handles business logic — building the system prompt and calling the AI
-- **AI Provider** wraps OpenRouter — isolated so swapping providers requires changing only one file
+- **AI Provider** wraps OpenRouter — isolated so swapping providers or models requires changing only one file (or one env var)
 - **Schema** contains all validation logic using Zod
 
 This means each piece is independently understandable and testable.

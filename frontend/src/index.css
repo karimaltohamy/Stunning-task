@@ -1,0 +1,198 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   GLOBAL BASE STYLES
+   Body background matches the source HTML exactly:
+   - Dark base: #141414
+   - Subtle orange radial glow at center-top
+   - Hairline grid of white lines at 40px intervals
+   ============================================================ */
+
+body {
+  background-color: #141414;
+  background-image:
+    radial-gradient(circle at 50% 30%, rgba(255, 107, 0, 0.08) 0%, transparent 60%),
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 100% 100%, 40px 40px, 40px 40px;
+  background-attachment: fixed;
+}
+
+/* ============================================================
+   MATERIAL SYMBOLS
+   ============================================================ */
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'liga';
+}
+
+/* ============================================================
+   DESIGN SYSTEM COMPONENTS
+   ============================================================ */
+
+/* Glassmorphism panel — used for the main composer card */
+.glass-panel {
+  background: rgba(10, 10, 10, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 1px solid rgba(255, 255, 255, 0.04);
+  border-right: 1px solid rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.8);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+}
+
+/* Hero ambient glow behind the composer card */
+.hero-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 400px;
+  background: radial-gradient(ellipse at center, rgba(255, 107, 0, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(40px);
+}
+
+/* AI Input container — orange glow ring on focus */
+.ai-input:focus-within {
+  border-color: #ff6b00 !important;
+  box-shadow: 0 0 0 2px rgba(255, 107, 0, 0.1);
+}
+
+/* Glow hover for response page CTA button */
+.glow-hover:hover {
+  box-shadow: 0 0 20px rgba(255, 107, 0, 0.15);
+}
+
+/* ============================================================
+   PROSE STYLES FOR AI RESPONSE
+   Renders markdown-like output from AI cleanly
+   ============================================================ */
+
+.ai-response-content {
+  color: #e5e2e1;
+  line-height: 1.7;
+}
+
+.ai-response-content h1,
+.ai-response-content h2,
+.ai-response-content h3,
+.ai-response-content h4 {
+  color: #ffffff;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.ai-response-content h1 { font-size: 1.5rem; }
+.ai-response-content h2 { font-size: 1.25rem; border-bottom: 1px solid #262626; padding-bottom: 0.5rem; }
+.ai-response-content h3 { font-size: 1.1rem; color: #ffb693; }
+
+.ai-response-content p {
+  margin-bottom: 1rem;
+  color: #e5e2e1;
+}
+
+.ai-response-content ul,
+.ai-response-content ol {
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.ai-response-content li {
+  margin-bottom: 0.4rem;
+  color: #e5e2e1;
+}
+
+.ai-response-content ul li::marker {
+  color: #ff6b00;
+}
+
+.ai-response-content ol li::marker {
+  color: #ff6b00;
+}
+
+.ai-response-content strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.ai-response-content code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.875rem;
+  background: #0e0e0e;
+  border: 1px solid #262626;
+  border-radius: 4px;
+  padding: 0.1rem 0.4rem;
+  color: #ffb693;
+}
+
+.ai-response-content pre {
+  background: #0e0e0e;
+  border: 1px solid #262626;
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.ai-response-content pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #e5e2e1;
+}
+
+.ai-response-content blockquote {
+  border-left: 2px solid #ff6b00;
+  padding-left: 1rem;
+  margin-left: 0;
+  color: #a3a3a3;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes progress-bar {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Text selection styling */
+::selection {
+  background: #ff6b00;
+  color: #000000;
+}
